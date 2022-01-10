@@ -41,7 +41,7 @@ function interpret(tables) {
       }
     });
 
-    output += `CREATE TABLE IF NOT EXISTS public.${table.title} (${temp.slice(
+    output += `CREATE TABLE IF NOT EXISTS ${table.title} (${temp.slice(
       0,
       -2
     )}); `;
@@ -80,27 +80,29 @@ function interpret(tables) {
               case "DELETE":
                 del += `${value.split(":")[0].trim()}, `;
                 break;
+              default:
+                break;
             }
           });
         }
 
         if (sel) {
-          output += `GRANT SELECT(${sel.slice(0, -2)}) ON public.${
+          output += `GRANT SELECT(${sel.slice(0, -2)}) ON ${
             table.title
           } TO graphile; `;
         }
         if (upd) {
-          output += `GRANT UPDATE(${sel.slice(0, -2)}) ON public.${
+          output += `GRANT UPDATE(${sel.slice(0, -2)}) ON ${
             table.title
           } TO graphile; `;
         }
         if (ins) {
-          output += `GRANT INSERT(${sel.slice(0, -2)}) ON public.${
+          output += `GRANT INSERT(${sel.slice(0, -2)}) ON ${
             table.title
           } TO graphile; `;
         }
         if (del) {
-          output += `GRANT DELETE(${sel.slice(0, -2)}) ON public.${
+          output += `GRANT DELETE(${sel.slice(0, -2)}) ON ${
             table.title
           } TO graphile; `;
         }
@@ -124,16 +126,14 @@ function interpret(tables) {
             var fk = value
               .substring(value.indexOf("FK - ") + 1, value.lastIndexOf(" )"))
               .split("- ")[1];
-            output += `ALTER TABLE public.${
+            output += `ALTER TABLE ${table.title} DROP CONSTRAINT IF EXISTS ${
               table.title
-            } DROP CONSTRAINT IF EXISTS ${table.title}_table_${value
-              .split(":")[0]
-              .trim()}_fk; `;
-            output += `ALTER TABLE public.${table.title} ADD CONSTRAINT ${
+            }_table_${value.split(":")[0].trim()}_fk; `;
+            output += `ALTER TABLE ${table.title} ADD CONSTRAINT ${
               table.title
             }_table_${value.split(":")[0].trim()}_fk FOREIGN KEY(${value
               .split(":")[0]
-              .trim()}) REFERENCES public.${fk.split(".")[0].trim()}(${fk
+              .trim()}) REFERENCES ${fk.split(".")[0].trim()}(${fk
               .split(".")[1]
               .trim()}) ON DELETE RESTRICT; `;
           }
@@ -154,7 +154,7 @@ function interpret(tables) {
       try {
         var col = value.split(":")[0].trim();
         output += `DROP INDEX IF EXISTS ${table.title}_table_${col}_idx; `;
-        output += `CREATE INDEX ${table.title}_table_${col}_idx ON public.${table.title}(${col}); `;
+        output += `CREATE INDEX ${table.title}_table_${col}_idx ON ${table.title}(${col}); `;
       } catch (e) {
         console.log("Error with indexes");
       }
@@ -163,7 +163,7 @@ function interpret(tables) {
 
   // Enable the RLS
   tables.forEach(function (table) {
-    output += `ALTER TABLE public.${table.title} ENABLE ROW LEVEL SECURITY; `;
+    output += `ALTER TABLE ${table.title} ENABLE ROW LEVEL SECURITY; `;
   });
 
   // Generate RLS policies
@@ -199,25 +199,27 @@ function interpret(tables) {
               case "DELETE":
                 del = true;
                 break;
+              default:
+                break;
             }
           });
         }
 
         if (sel) {
-          output += `DROP POLICY IF EXISTS ${table.title}_table_select_policy ON public.${table.title}; `;
-          output += `CREATE POLICY ${table.title}_table_select_policy ON public.${table.title} FOR SELECT TO graphile USING ( true ); `;
+          output += `DROP POLICY IF EXISTS ${table.title}_table_select_policy ON ${table.title}; `;
+          output += `CREATE POLICY ${table.title}_table_select_policy ON ${table.title} FOR SELECT TO graphile USING ( true ); `;
         }
         if (upd) {
-          output += `DROP POLICY IF EXISTS ${table.title}_table_update_policy ON public.${table.title}; `;
-          output += `CREATE POLICY ${table.title}_table_update_policy ON public.${table.title} FOR UPDATE TO graphile USING ( true ) WITH CHECK ( true ); `;
+          output += `DROP POLICY IF EXISTS ${table.title}_table_update_policy ON ${table.title}; `;
+          output += `CREATE POLICY ${table.title}_table_update_policy ON ${table.title} FOR UPDATE TO graphile USING ( true ) WITH CHECK ( true ); `;
         }
         if (ins) {
-          output += `DROP POLICY IF EXISTS ${table.title}_table_insert_policy ON public.${table.title}; `;
-          output += `CREATE POLICY ${table.title}_table_insert_policy ON public.${table.title} FOR INSERT TO graphile USING ( true ) WITH CHECK ( true ); `;
+          output += `DROP POLICY IF EXISTS ${table.title}_table_insert_policy ON ${table.title}; `;
+          output += `CREATE POLICY ${table.title}_table_insert_policy ON ${table.title} FOR INSERT TO graphile USING ( true ) WITH CHECK ( true ); `;
         }
         if (del) {
-          output += `DROP POLICY IF EXISTS ${table.title}_table_delete_policy ON public.${table.title}; `;
-          output += `CREATE POLICY ${table.title}_table_delete_policy ON public.${table.title} FOR DELETE TO graphile USING ( true ); `;
+          output += `DROP POLICY IF EXISTS ${table.title}_table_delete_policy ON ${table.title}; `;
+          output += `CREATE POLICY ${table.title}_table_delete_policy ON ${table.title} FOR DELETE TO graphile USING ( true ); `;
         }
       } catch (e) {
         console.log("Error with RLS policies");
